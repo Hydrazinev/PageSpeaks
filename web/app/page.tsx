@@ -5,6 +5,19 @@ import { useState, useRef, useEffect } from "react";
 const CHUNK_SIZE = 800;
 const TTS_URL = process.env.NEXT_PUBLIC_TTS_URL ?? "http://localhost:8000";
 
+const QUOTES = [
+  "The real question is not whether life exists after death. The real question is whether you are alive before death.",
+  "Be — don't try to become.",
+  "Life begins where fear ends.",
+  "Experience life in all possible ways — good-bad, bitter-sweet, dark-light, summer-winter. Experience all the dualities.",
+  "The moment you become miserly you are closed to the basic phenomenon of life: expansion, sharing, giving.",
+  "Creativity is the greatest rebellion in existence.",
+  "To be creative means to be in love with life.",
+  "If you love a flower, don't pick it up. Because if you pick it up it dies and it ceases to be what you love.",
+  "The less people know, the more stubbornly they know it.",
+  "Whenever you are in doubt, existence has a way of making things clear to you — if you are open.",
+];
+
 function chunkText(text: string): string[] {
   const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) ?? [text];
   const chunks: string[] = [];
@@ -21,7 +34,61 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
+function CompareAI() {
+  const [aiUrl, setAiUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function generate() {
+    setLoading(true);
+    try {
+      const res = await fetch(`${TTS_URL}/synthesize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "It is the mind that has been trained into Aristotelian logic.", speed: 1.0 }),
+      });
+      const blob = await res.blob();
+      setAiUrl(URL.createObjectURL(blob));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.5rem" }}>
+      <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.75rem" }}>AI Clone</p>
+      <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.25rem", color: "var(--foreground)" }}>
+        &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
+      </p>
+      {aiUrl ? (
+        <audio controls src={aiUrl} style={{ width: "100%" }} />
+      ) : (
+        <button
+          onClick={generate}
+          disabled={loading}
+          style={{
+            padding: "0.6rem 1.25rem",
+            background: "var(--foreground)",
+            color: "var(--background)",
+            border: "none",
+            borderRadius: "4px",
+            fontSize: "0.8rem",
+            cursor: loading ? "wait" : "pointer",
+            opacity: loading ? 0.6 : 1,
+            fontFamily: "var(--font-inter)",
+          }}
+        >
+          {loading ? "Generating…" : "▶  Generate AI version"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
+  const [quote, setQuote] = useState(QUOTES[0]);
+  useEffect(() => {
+    setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  }, []);
   const [text, setText] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused" | "done" | "error">("idle");
   const [progress, setProgress] = useState(0);
@@ -289,11 +356,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Compare */}
+      <section style={{ borderTop: "1px solid var(--border)" }} className="px-8 py-20">
+        <div className="max-w-5xl mx-auto">
+          <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>Compare</p>
+          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "2rem", fontWeight: 400, marginBottom: "0.5rem" }}>Real vs AI</h2>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "2.5rem" }}>
+            Same sentence — once from the original recording, once from the AI clone.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.5rem" }}>
+              <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.75rem" }}>Original Voice</p>
+              <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.25rem", color: "var(--foreground)" }}>
+                &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
+              </p>
+              <audio controls src="/osho_real.wav" style={{ width: "100%", accentColor: "var(--accent)" }} />
+            </div>
+            <CompareAI />
+          </div>
+        </div>
+      </section>
+
       {/* Quote */}
       <section style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }} className="px-8 py-16">
         <div className="max-w-5xl mx-auto">
           <blockquote style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.2rem, 2.5vw, 1.6rem)", fontWeight: 400, lineHeight: 1.5, maxWidth: "60ch", fontStyle: "italic" }}>
-            &ldquo;The real question is not whether life exists after death. The real question is whether you are alive before death.&rdquo;
+            &ldquo;{quote}&rdquo;
           </blockquote>
           <p style={{ color: "var(--muted)", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "1.25rem" }}>
             — Osho
