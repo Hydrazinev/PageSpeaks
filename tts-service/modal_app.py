@@ -91,7 +91,7 @@ class OshoTTS:
                 ref_text=REF_TEXT,
                 gen_text=req.text,
                 speed=req.speed,
-                nfe_step=16,
+                nfe_step=32,
             )
             if isinstance(wav, torch.Tensor):
                 wav = wav.cpu().numpy()
