@@ -19,7 +19,7 @@ count = 0
 with open(SRC_CSV, "r", encoding="utf-8") as fin, \
      open(OUT_CSV, "w", newline="", encoding="utf-8") as fout:
     writer = csv.writer(fout, delimiter="|")
-    writer.writerow(["audio_file", "text"])  # header required by F5-TTS
+    writer.writerow(["audio_file", "text"])
     for row in csv.reader(fin, delimiter="|"):
         if len(row) < 2:
             continue

@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"  # allow MPS to use all available memory
+os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
 
-# Patch F5-TTS config: reduce workers to 0 (main process only) to free memory for GPU
+# Setting num_workers=0 avoids multiprocessing overhead that competes with MPS for memory
 import yaml
 cfg_path = Path(__file__).parent / "venv/lib/python3.11/site-packages/f5_tts/configs/F5TTS_v1_Base.yaml"
 cfg = yaml.safe_load(cfg_path.read_text())

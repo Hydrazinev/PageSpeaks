@@ -20,7 +20,6 @@ from pydub import AudioSegment
 from pydub.silence import split_on_silence
 from tqdm import tqdm
 
-# Force line-buffered stdout so every print() appears in the log immediately
 sys.stdout = os.fdopen(sys.stdout.fileno(), "w", buffering=1)
 
 def log(msg: str):
@@ -30,8 +29,8 @@ SOURCE_DIR = Path(__file__).parent.parent / "Osho Rec"
 DATASET_DIR = Path(__file__).parent / "dataset"
 WAVS_DIR = DATASET_DIR / "wavs"
 SAMPLE_RATE = 22050
-MIN_CLIP_MS = 2000    # 2 seconds
-MAX_CLIP_MS = 12000   # 12 seconds
+MIN_CLIP_MS = 2000
+MAX_CLIP_MS = 12000
 
 WAVS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -40,7 +39,6 @@ def convert_and_denoise(mp3_path: Path) -> np.ndarray:
     audio = AudioSegment.from_mp3(mp3_path)
     audio = audio.set_channels(1).set_frame_rate(SAMPLE_RATE)
     samples = np.array(audio.get_array_of_samples()).astype(np.float32) / 32768.0
-    # Reduce background noise using a noise profile from the first 0.5s
     noise_sample = samples[: int(SAMPLE_RATE * 0.5)]
     reduced = nr.reduce_noise(y=samples, sr=SAMPLE_RATE, y_noise=noise_sample, prop_decrease=0.75)
     return reduced, audio
@@ -51,11 +49,10 @@ def segment_audio(mp3_path: Path) -> list[AudioSegment]:
     audio = audio.set_channels(1).set_frame_rate(SAMPLE_RATE)
     chunks = split_on_silence(
         audio,
-        min_silence_len=400,     # ms of silence to split on
-        silence_thresh=-40,       # dBFS threshold
-        keep_silence=150,         # keep a bit of silence at edges
+        min_silence_len=400,
+        silence_thresh=-40,
+        keep_silence=150,
     )
-    # Merge too-short chunks, drop too-long ones
     merged, current = [], None
     for chunk in chunks:
         if current is None:
