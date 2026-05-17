@@ -186,38 +186,38 @@ export default function Home() {
     <main style={{ background: "var(--background)", color: "var(--foreground)" }} className="min-h-screen">
 
       {/* Nav */}
-      <nav className="flex justify-between items-center px-8 py-6 border-b" style={{ borderColor: "var(--border)" }}>
-        <span style={{ fontFamily: "var(--font-playfair)", fontSize: "1.1rem", letterSpacing: "0.05em" }}>
+      <nav className="flex justify-between items-center px-4 md:px-8 py-5 border-b" style={{ borderColor: "var(--border)" }}>
+        <span style={{ fontFamily: "var(--font-playfair)", fontSize: "1.05rem", letterSpacing: "0.05em" }}>
           Osho Speaks
         </span>
-        <span style={{ color: "var(--muted)", fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        <span style={{ color: "var(--muted)", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>
           AI Voice Clone
         </span>
       </nav>
 
       {/* Hero */}
-      <section className="px-8 pt-24 pb-20 max-w-5xl mx-auto">
-        <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1.5rem" }}>
+      <section className="px-4 md:px-8 pt-14 md:pt-24 pb-12 md:pb-20 max-w-5xl mx-auto">
+        <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1.25rem" }}>
           Fine-tuned on 19 hours of lectures
         </p>
-        <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(3rem, 8vw, 6rem)", fontWeight: 400, lineHeight: 1.05, maxWidth: "14ch" }}>
+        <h1 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(2.4rem, 8vw, 6rem)", fontWeight: 400, lineHeight: 1.05, maxWidth: "14ch" }}>
           Hear any text in his voice.
         </h1>
-        <p style={{ color: "var(--muted)", fontSize: "1.05rem", marginTop: "2rem", maxWidth: "48ch", lineHeight: 1.7, fontWeight: 300 }}>
+        <p style={{ color: "var(--muted)", fontSize: "1rem", marginTop: "1.5rem", maxWidth: "44ch", lineHeight: 1.7, fontWeight: 300 }}>
           Paste a passage, a chapter, or an entire book — and listen to it read aloud exactly as Osho would have.
         </p>
       </section>
 
       {/* Player */}
-      <section style={{ borderTop: "1px solid var(--border)", background: "#EDE8DF" }} className="px-8 py-20">
+      <section style={{ borderTop: "1px solid var(--border)", background: "#EDE8DF" }} className="px-4 md:px-8 py-12 md:py-20">
         <div className="max-w-3xl mx-auto">
-          <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>
+          <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
             Listen
           </p>
-          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "2.5rem", fontWeight: 400, marginBottom: "0.5rem" }}>
+          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.8rem, 5vw, 2.5rem)", fontWeight: 400, marginBottom: "0.5rem" }}>
             Enter your text
           </h2>
-          <p style={{ fontSize: "0.8rem", marginBottom: "2rem", color: "var(--accent)", fontWeight: 500 }}>
+          <p style={{ fontSize: "0.8rem", marginBottom: "1.5rem", color: "var(--accent)", fontWeight: 500 }}>
             First request wakes the GPU (~2 min). Fast after that.
           </p>
 
@@ -227,7 +227,7 @@ export default function Home() {
               background: "#F4EFE6",
               border: "1px solid var(--border)",
               borderRadius: "4px",
-              padding: "1.25rem",
+              padding: "1rem",
               color: "var(--foreground)",
               fontSize: "0.9rem",
               lineHeight: 1.7,
@@ -235,24 +235,24 @@ export default function Home() {
               outline: "none",
               fontFamily: "var(--font-inter)",
             }}
-            rows={8}
+            rows={7}
             placeholder="Paste a chapter, a passage, or your entire book here…"
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={isActive}
           />
 
-          <div className="flex items-center justify-between mt-3 mb-6">
+          <div className="flex items-center justify-between mt-3 mb-5">
             <label style={{ cursor: "pointer", fontSize: "0.8rem", color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
               Upload .txt file
               <input type="file" accept=".txt" className="hidden" onChange={handleFileUpload} disabled={isActive} />
             </label>
-            <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{text.length.toLocaleString()} characters</span>
+            <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{text.length.toLocaleString()} chars</span>
           </div>
 
           {/* Speed */}
-          <div className="flex items-center gap-4 mb-6">
-            <span style={{ fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)", width: "3rem" }}>Speed</span>
+          <div className="flex items-center gap-3 mb-5">
+            <span style={{ fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)", whiteSpace: "nowrap" }}>Speed</span>
             <input
               type="range" min={0.5} max={1.5} step={0.05}
               value={speed}
@@ -261,21 +261,14 @@ export default function Home() {
               style={{ accentColor: "var(--accent)" }}
               disabled={isActive}
             />
-            <span style={{ color: "var(--accent)", fontSize: "0.85rem", width: "3rem", textAlign: "right" }}>{speed.toFixed(2)}×</span>
+            <span style={{ color: "var(--accent)", fontSize: "0.85rem", whiteSpace: "nowrap" }}>{speed.toFixed(2)}×</span>
           </div>
 
           {/* Progress */}
           {isActive && (
-            <div className="mb-6">
+            <div className="mb-5">
               <div style={{ height: "1px", background: "var(--border)", borderRadius: "1px", overflow: "hidden" }}>
-                <div
-                  style={{
-                    height: "100%",
-                    background: "var(--accent)",
-                    width: `${(progress / totalChunks) * 100}%`,
-                    transition: "width 0.5s ease",
-                  }}
-                />
+                <div style={{ height: "100%", background: "var(--accent)", width: `${(progress / totalChunks) * 100}%`, transition: "width 0.5s ease" }} />
               </div>
               <p style={{ color: "var(--muted)", fontSize: "0.75rem", marginTop: "0.5rem", textAlign: "center" }}>
                 {status === "loading" ? "Synthesizing…" : status === "paused" ? "Paused" : "Playing…"} &nbsp;{progress} / {totalChunks}
@@ -296,8 +289,7 @@ export default function Home() {
                   color: "var(--background)",
                   border: "none",
                   borderRadius: "4px",
-                  fontSize: "0.85rem",
-                  letterSpacing: "0.08em",
+                  fontSize: "0.9rem",
                   cursor: text.trim() ? "pointer" : "not-allowed",
                   opacity: text.trim() ? 1 : 0.4,
                   fontFamily: "var(--font-inter)",
@@ -318,7 +310,7 @@ export default function Home() {
                     color: "var(--background)",
                     border: "none",
                     borderRadius: "4px",
-                    fontSize: "0.85rem",
+                    fontSize: "0.9rem",
                     cursor: "pointer",
                     opacity: status === "loading" ? 0.4 : 1,
                     fontFamily: "var(--font-inter)",
@@ -329,12 +321,12 @@ export default function Home() {
                 <button
                   onClick={handleStop}
                   style={{
-                    padding: "0.85rem 1.5rem",
+                    padding: "0.85rem 1.25rem",
                     background: "transparent",
                     color: "var(--foreground)",
                     border: "1px solid var(--border)",
                     borderRadius: "4px",
-                    fontSize: "0.85rem",
+                    fontSize: "0.9rem",
                     cursor: "pointer",
                     fontFamily: "var(--font-inter)",
                   }}
@@ -357,20 +349,20 @@ export default function Home() {
       </section>
 
       {/* Compare */}
-      <section style={{ borderTop: "1px solid var(--border)" }} className="px-8 py-20">
+      <section style={{ borderTop: "1px solid var(--border)" }} className="px-4 md:px-8 py-12 md:py-20">
         <div className="max-w-5xl mx-auto">
-          <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>Compare</p>
-          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "2rem", fontWeight: 400, marginBottom: "0.5rem" }}>Real vs AI</h2>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "2.5rem" }}>
+          <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Compare</p>
+          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 400, marginBottom: "0.5rem" }}>Real vs AI</h2>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "2rem" }}>
             Same sentence — once from the original recording, once from the AI clone.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.5rem" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.25rem" }}>
               <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.75rem" }}>Original Voice</p>
-              <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.25rem", color: "var(--foreground)" }}>
+              <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: "1.25rem" }}>
                 &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
               </p>
-              <audio controls src="/osho_real.wav" style={{ width: "100%", accentColor: "var(--accent)" }} />
+              <audio controls src="/osho_real.wav" style={{ width: "100%" }} />
             </div>
             <CompareAI />
           </div>
@@ -378,46 +370,46 @@ export default function Home() {
       </section>
 
       {/* Quote */}
-      <section style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }} className="px-8 py-16">
+      <section style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }} className="px-4 md:px-8 py-12 md:py-16">
         <div className="max-w-5xl mx-auto">
-          <blockquote style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.2rem, 2.5vw, 1.6rem)", fontWeight: 400, lineHeight: 1.5, maxWidth: "60ch", fontStyle: "italic" }}>
+          <blockquote style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.1rem, 3vw, 1.6rem)", fontWeight: 400, lineHeight: 1.5, fontStyle: "italic" }}>
             &ldquo;{quote}&rdquo;
           </blockquote>
-          <p style={{ color: "var(--muted)", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "1.25rem" }}>
+          <p style={{ color: "var(--muted)", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginTop: "1.25rem" }}>
             — Osho
           </p>
         </div>
       </section>
 
       {/* About */}
-      <section className="px-8 py-20 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16">
-        <div>
-          <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>About</p>
-          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "2rem", fontWeight: 400, lineHeight: 1.2, marginBottom: "1.25rem" }}>
-            Osho (1931–1990)
-          </h2>
-          <p style={{ color: "var(--muted)", lineHeight: 1.8, fontWeight: 300, fontSize: "0.95rem" }}>
-            Born Chandra Mohan Jain in India, Osho was a philosopher, mystic, and one of the most prolific spiritual speakers of the 20th century. Speaking extemporaneously for over two decades, he left behind more than 600 volumes of transcribed lectures spanning Zen, Taoism, Sufism, Western philosophy, and the full breadth of human consciousness.
-          </p>
-        </div>
-        <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: "2rem" }}>
-          <p style={{ color: "var(--accent)", fontSize: "0.75rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "1rem" }}>This Project</p>
-          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "2rem", fontWeight: 400, lineHeight: 1.2, marginBottom: "1.25rem" }}>
-            How it works
-          </h2>
-          <p style={{ color: "var(--muted)", lineHeight: 1.8, fontWeight: 300, fontSize: "0.95rem" }}>
-            F5-TTS — a flow-matching voice model — was fine-tuned on 19 hours of Osho&apos;s lectures: segmented, denoised, and transcribed using Whisper. The model runs on a serverless GPU and streams audio chunk by chunk, so playback begins within seconds.
-          </p>
+      <section className="px-4 md:px-8 py-12 md:py-20 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16">
+          <div>
+            <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>About</p>
+            <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.5rem, 4vw, 2rem)", fontWeight: 400, lineHeight: 1.2, marginBottom: "1rem" }}>
+              Osho (1931–1990)
+            </h2>
+            <p style={{ color: "var(--muted)", lineHeight: 1.8, fontWeight: 300, fontSize: "0.95rem" }}>
+              Born Chandra Mohan Jain in India, Osho was a philosopher, mystic, and one of the most prolific spiritual speakers of the 20th century. Speaking extemporaneously for over two decades, he left behind more than 600 volumes of transcribed lectures spanning Zen, Taoism, Sufism, Western philosophy, and the full breadth of human consciousness.
+            </p>
+          </div>
+          <div className="md:border-l md:pl-8" style={{ borderColor: "var(--border)" }}>
+            <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>This Project</p>
+            <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.5rem, 4vw, 2rem)", fontWeight: 400, lineHeight: 1.2, marginBottom: "1rem" }}>
+              How it works
+            </h2>
+            <p style={{ color: "var(--muted)", lineHeight: 1.8, fontWeight: 300, fontSize: "0.95rem" }}>
+              F5-TTS — a flow-matching voice model — was fine-tuned on 19 hours of Osho&apos;s lectures: segmented, denoised, and transcribed using Whisper. The model runs on a serverless GPU and streams audio chunk by chunk, so playback begins within seconds.
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop: "1px solid var(--border)" }} className="px-8 py-8">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
+      <footer style={{ borderTop: "1px solid var(--border)" }} className="px-4 md:px-8 py-6">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           <span style={{ fontFamily: "var(--font-playfair)", fontSize: "0.95rem" }}>Osho Speaks</span>
-          <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>
-            F5-TTS · Modal · Vercel
-          </span>
+          <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>F5-TTS · Modal · Vercel</span>
         </div>
       </footer>
 
