@@ -142,16 +142,29 @@ export default function Home() {
     setProgress(0);
     setStatus("loading");
     try {
+      // Kick off synthesis of first chunk immediately
+      let upNext: Promise<string> = synthesizeChunk(chunks[0]);
+
       for (let i = 0; i < chunks.length; i++) {
-        if (stopFlag.current) break;
-        while (pauseFlag.current && !stopFlag.current) {
-          await new Promise(r => setTimeout(r, 200));
-        }
         if (stopFlag.current) break;
         setProgress(i + 1);
         setStatus("loading");
-        const url = await synthesizeChunk(chunks[i]);
+
+        // Await the chunk that was already being synthesized in background
+        const url = await upNext;
+
+        // While we play this chunk, synthesize the next one in parallel
+        if (i + 1 < chunks.length) {
+          upNext = synthesizeChunk(chunks[i + 1]);
+        }
+
         if (stopFlag.current) { URL.revokeObjectURL(url); break; }
+
+        while (pauseFlag.current && !stopFlag.current) {
+          await new Promise(r => setTimeout(r, 200));
+        }
+        if (stopFlag.current) { URL.revokeObjectURL(url); break; }
+
         setStatus("playing");
         await playUrl(url);
       }
@@ -374,6 +387,40 @@ export default function Home() {
               <audio controls src="/osho_real.wav" style={{ width: "100%" }} />
             </div>
             <CompareAI />
+          </div>
+        </div>
+      </section>
+
+      {/* How it was built */}
+      <section style={{ borderTop: "1px solid var(--border)" }} className="px-4 md:px-8 py-12 md:py-20">
+        <div className="max-w-5xl mx-auto">
+          <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Process</p>
+          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 400, marginBottom: "0.5rem" }}>How it was built</h2>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "3rem", maxWidth: "52ch", lineHeight: 1.7 }}>
+            The obvious approach didn&apos;t work. Here&apos;s what it took to actually get the accent right.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
+            <div>
+              <p style={{ fontFamily: "var(--font-playfair)", fontSize: "2.5rem", color: "var(--border)", lineHeight: 1, marginBottom: "1rem" }}>01</p>
+              <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: "1.1rem", fontWeight: 500, marginBottom: "0.75rem" }}>Zero-shot failed</h3>
+              <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.8, fontWeight: 300 }}>
+                F5-TTS can clone a voice from a 10-second reference clip — no training needed. The pitch and rhythm were close. But the accent was off. A short clip doesn&apos;t have enough coverage of every phoneme, so the model fills the gaps with standard English.
+              </p>
+            </div>
+            <div>
+              <p style={{ fontFamily: "var(--font-playfair)", fontSize: "2.5rem", color: "var(--border)", lineHeight: 1, marginBottom: "1rem" }}>02</p>
+              <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: "1.1rem", fontWeight: 500, marginBottom: "0.75rem" }}>19 hours of audio</h3>
+              <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.8, fontWeight: 300 }}>
+                Collected 19 hours of Osho&apos;s lectures. Built a pipeline to split on silence, denoise each clip, and transcribe with Whisper — producing 6,676 clean training samples. Fine-tuned F5-TTS on a Colab A100 until the accent was baked into the model weights.
+              </p>
+            </div>
+            <div>
+              <p style={{ fontFamily: "var(--font-playfair)", fontSize: "2.5rem", color: "var(--border)", lineHeight: 1, marginBottom: "1rem" }}>03</p>
+              <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: "1.1rem", fontWeight: 500, marginBottom: "0.75rem" }}>Serverless GPU</h3>
+              <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.8, fontWeight: 300 }}>
+                The 5.4 GB checkpoint lives on Hugging Face Hub. Modal downloads it once, caches it on a Volume, and runs inference on a T4 GPU — only when a request comes in. Zero idle cost. The frontend streams audio chunk by chunk so playback starts within seconds.
+              </p>
+            </div>
           </div>
         </div>
       </section>
