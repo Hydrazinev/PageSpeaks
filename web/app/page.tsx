@@ -422,7 +422,7 @@ export default function Home() {
             {/* Card 2 — Zero-shot */}
             <CompareCard
               label="Zero-shot Clone"
-              sublabel="10-second ref clip · no training"
+              sublabel="4-second ref clip · base model · no training"
               endpoint="/synthesize-zeroshot"
               buttonLabel="▶  Generate zero-shot"
             />
