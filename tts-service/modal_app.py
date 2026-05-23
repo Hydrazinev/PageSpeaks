@@ -53,10 +53,14 @@ class OshoTTS:
             shutil.copy(src, ref_path)
             volume.commit()
 
-        print("Loading F5-TTS model...")
-        self.tts = F5TTS(ckpt_file=str(ckpt_path), device="cuda")
+        print("Loading fine-tuned F5-TTS model...")
+        self.tts_finetuned = F5TTS(ckpt_file=str(ckpt_path), device="cuda")
+
+        print("Loading base F5-TTS model (zero-shot)...")
+        self.tts_base = F5TTS(device="cuda")  # base model, no custom checkpoint
+
         self.ref = str(ref_path)
-        print("Model ready!")
+        print("Both models ready!")
 
     @modal.asgi_app()
     def web(self):
@@ -68,31 +72,15 @@ class OshoTTS:
             allow_headers=["*"],
         )
 
-        tts = self.tts
-        ref = self.ref
+        tts_finetuned = self.tts_finetuned
+        tts_base      = self.tts_base
+        ref           = self.ref
 
         class SynthRequest(BaseModel):
             text: str
             speed: float = 1.0
 
-        @fastapi_app.get("/health")
-        def health():
-            return {"status": "ok"}
-
-        @fastapi_app.post("/synthesize")
-        async def synthesize(req: SynthRequest):
-            if not req.text.strip():
-                raise HTTPException(400, "Text is empty")
-            if len(req.text) > 5000:
-                raise HTTPException(400, "Text too long (max 5000 chars)")
-
-            wav, sr, _ = tts.infer(
-                ref_file=ref,
-                ref_text=REF_TEXT,
-                gen_text=req.text,
-                speed=req.speed,
-                nfe_step=32,
-            )
+        def _wav_to_response(wav, sr) -> StreamingResponse:
             if isinstance(wav, torch.Tensor):
                 wav = wav.cpu().numpy()
             wav = np.array(wav, dtype=np.float32)
@@ -100,5 +88,43 @@ class OshoTTS:
             sf.write(buf, wav, samplerate=sr, format="WAV")
             buf.seek(0)
             return StreamingResponse(buf, media_type="audio/wav")
+
+        @fastapi_app.get("/health")
+        def health():
+            return {"status": "ok"}
+
+        @fastapi_app.post("/synthesize")
+        async def synthesize(req: SynthRequest):
+            """Fine-tuned model — accent baked in from 19h of training."""
+            if not req.text.strip():
+                raise HTTPException(400, "Text is empty")
+            if len(req.text) > 5000:
+                raise HTTPException(400, "Text too long (max 5000 chars)")
+
+            wav, sr, _ = tts_finetuned.infer(
+                ref_file=ref,
+                ref_text=REF_TEXT,
+                gen_text=req.text,
+                speed=req.speed,
+                nfe_step=32,
+            )
+            return _wav_to_response(wav, sr)
+
+        @fastapi_app.post("/synthesize-zeroshot")
+        async def synthesize_zeroshot(req: SynthRequest):
+            """Base model with ref clip only — no fine-tuning, accent inferred at runtime."""
+            if not req.text.strip():
+                raise HTTPException(400, "Text is empty")
+            if len(req.text) > 2000:
+                raise HTTPException(400, "Text too long for zero-shot (max 2000 chars)")
+
+            wav, sr, _ = tts_base.infer(
+                ref_file=ref,
+                ref_text=REF_TEXT,
+                gen_text=req.text,
+                speed=req.speed,
+                nfe_step=32,
+            )
+            return _wav_to_response(wav, sr)
 
         return fastapi_app

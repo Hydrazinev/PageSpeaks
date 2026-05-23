@@ -34,33 +34,53 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
-function CompareAI() {
-  const [aiUrl, setAiUrl] = useState<string | null>(null);
+const COMPARE_TEXT = "It is the mind that has been trained into Aristotelian logic.";
+
+function CompareCard({
+  label,
+  sublabel,
+  endpoint,
+  buttonLabel = "▶  Generate",
+}: {
+  label: string;
+  sublabel: string;
+  endpoint: string;
+  buttonLabel?: string;
+}) {
+  const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   async function generate() {
     setLoading(true);
+    setError(false);
     try {
-      const res = await fetch(`${TTS_URL}/synthesize`, {
+      const res = await fetch(`${TTS_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: "It is the mind that has been trained into Aristotelian logic.", speed: 1.0 }),
+        body: JSON.stringify({ text: COMPARE_TEXT, speed: 1.0 }),
       });
+      if (!res.ok) throw new Error();
       const blob = await res.blob();
-      setAiUrl(URL.createObjectURL(blob));
+      setUrl(URL.createObjectURL(blob));
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.5rem" }}>
-      <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.75rem" }}>AI Clone</p>
-      <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "1.25rem", color: "var(--foreground)" }}>
-        &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
+    <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div>
+        <p style={{ fontSize: "0.65rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.2rem" }}>{label}</p>
+        <p style={{ fontSize: "0.7rem", color: "var(--accent)", fontWeight: 500 }}>{sublabel}</p>
+      </div>
+      <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.9rem", lineHeight: 1.6, color: "var(--foreground)" }}>
+        &ldquo;{COMPARE_TEXT}&rdquo;
       </p>
-      {aiUrl ? (
-        <audio controls src={aiUrl} style={{ width: "100%" }} />
+      {url ? (
+        <audio controls src={url} style={{ width: "100%" }} />
       ) : (
         <button
           onClick={generate}
@@ -75,10 +95,14 @@ function CompareAI() {
             cursor: loading ? "wait" : "pointer",
             opacity: loading ? 0.6 : 1,
             fontFamily: "var(--font-inter)",
+            alignSelf: "flex-start",
           }}
         >
-          {loading ? "Generating…" : "▶  Generate AI version"}
+          {loading ? "Generating…" : buttonLabel}
         </button>
+      )}
+      {error && (
+        <p style={{ fontSize: "0.75rem", color: "#C0392B" }}>GPU may be waking up — try again in a moment.</p>
       )}
     </div>
   );
@@ -372,21 +396,44 @@ export default function Home() {
 
       {/* Compare */}
       <section style={{ borderTop: "1px solid var(--border)" }} className="px-4 md:px-8 py-12 md:py-20">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Compare</p>
-          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 400, marginBottom: "0.5rem" }}>Real vs AI</h2>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "2rem" }}>
-            Same sentence — once from the original recording, once from the AI clone.
+          <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 400, marginBottom: "0.5rem" }}>Real · Zero-shot · Fine-tuned</h2>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "0.5rem", maxWidth: "54ch", lineHeight: 1.7 }}>
+            Same sentence, three versions. Zero-shot clones the voice from a 10-second clip at inference time — no training.
+            Fine-tuned was trained on 19 hours of audio. Hear the difference the accent makes.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.25rem" }}>
-              <p style={{ fontSize: "0.7rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.75rem" }}>Original Voice</p>
-              <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.9rem", lineHeight: 1.6, marginBottom: "1.25rem" }}>
-                &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
+          <p style={{ color: "var(--accent)", fontSize: "0.8rem", fontWeight: 500, marginBottom: "2rem" }}>
+            ↓ Generate both AI versions to compare
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Card 1 — Real */}
+            <div style={{ background: "#EDE8DF", borderRadius: "6px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div>
+                <p style={{ fontSize: "0.65rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--muted)", marginBottom: "0.2rem" }}>Original Recording</p>
+                <p style={{ fontSize: "0.7rem", color: "var(--accent)", fontWeight: 500 }}>The real voice</p>
+              </div>
+              <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.9rem", lineHeight: 1.6, color: "var(--foreground)" }}>
+                &ldquo;{COMPARE_TEXT}&rdquo;
               </p>
               <audio controls src="/osho_real.wav" style={{ width: "100%" }} />
             </div>
-            <CompareAI />
+
+            {/* Card 2 — Zero-shot */}
+            <CompareCard
+              label="Zero-shot Clone"
+              sublabel="10-second ref clip · no training"
+              endpoint="/synthesize-zeroshot"
+              buttonLabel="▶  Generate zero-shot"
+            />
+
+            {/* Card 3 — Fine-tuned */}
+            <CompareCard
+              label="Fine-tuned Clone"
+              sublabel="19 hours of training · accent baked in"
+              endpoint="/synthesize"
+              buttonLabel="▶  Generate fine-tuned"
+            />
           </div>
         </div>
       </section>
@@ -397,7 +444,7 @@ export default function Home() {
           <p style={{ color: "var(--accent)", fontSize: "0.7rem", letterSpacing: "0.18em", textTransform: "uppercase", marginBottom: "0.75rem" }}>Process</p>
           <h2 style={{ fontFamily: "var(--font-playfair)", fontSize: "clamp(1.6rem, 4vw, 2rem)", fontWeight: 400, marginBottom: "0.5rem" }}>How it was built</h2>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 300, marginBottom: "3rem", maxWidth: "52ch", lineHeight: 1.7 }}>
-            The obvious approach didn&apos;t work. Here&apos;s what it took to actually get the accent right.
+            The obvious approach didn&apos;t work. You can hear exactly why in the Compare section above.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-8">
             <div>
