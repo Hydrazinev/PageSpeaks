@@ -118,6 +118,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [totalChunks, setTotalChunks] = useState(0);
   const [speed, setSpeed] = useState(1.0);
+  const [model, setModel] = useState<"finetuned" | "zeroshot">("finetuned");
   const speedRef = useRef(1.0);
   const stopFlag = useRef(false);
   const pauseFlag = useRef(false);
@@ -136,7 +137,8 @@ export default function Home() {
   }, []);
 
   async function synthesizeChunk(chunk: string): Promise<string> {
-    const res = await fetch(`${TTS_URL}/synthesize`, {
+    const endpoint = model === "zeroshot" ? "/synthesize-zeroshot" : "/synthesize";
+    const res = await fetch(`${TTS_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: chunk, speed: 1.0 }),
@@ -297,6 +299,38 @@ export default function Home() {
             <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{text.length.toLocaleString()} chars</span>
           </div>
 
+          {/* Model toggle */}
+          <div className="flex items-center gap-2 mb-4">
+            <span style={{ fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)", whiteSpace: "nowrap" }}>Model</span>
+            <div className="flex" style={{ border: "1px solid var(--border)", borderRadius: "4px", overflow: "hidden" }}>
+              {(["finetuned", "zeroshot"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => !isActive && setModel(m)}
+                  disabled={isActive}
+                  style={{
+                    padding: "0.4rem 0.85rem",
+                    fontSize: "0.75rem",
+                    fontFamily: "var(--font-inter)",
+                    border: "none",
+                    borderRight: m === "finetuned" ? "1px solid var(--border)" : "none",
+                    cursor: isActive ? "not-allowed" : "pointer",
+                    background: model === m ? "var(--foreground)" : "transparent",
+                    color: model === m ? "var(--background)" : "var(--muted)",
+                    transition: "background 0.15s, color 0.15s",
+                  }}
+                >
+                  {m === "finetuned" ? "Fine-tuned" : "Zero-shot"}
+                </button>
+              ))}
+            </div>
+            <span style={{ fontSize: "0.72rem", color: "var(--muted)", fontWeight: 300 }}>
+              {model === "finetuned"
+                ? "19h training · accent baked in"
+                : "4s ref clip · base model · accent may drift"}
+            </span>
+          </div>
+
           {/* Speed */}
           <div className="flex items-center gap-3 mb-5">
             <span style={{ fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted)", whiteSpace: "nowrap" }}>Speed</span>
@@ -341,7 +375,7 @@ export default function Home() {
                   fontFamily: "var(--font-inter)",
                 }}
               >
-                ▶  Play
+                ▶  Play {model === "zeroshot" ? "(zero-shot)" : "(fine-tuned)"}
               </button>
             )}
             {isActive && (
