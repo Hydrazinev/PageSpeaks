@@ -34,7 +34,7 @@ function chunkText(text: string): string[] {
   return chunks;
 }
 
-const COMPARE_TEXT = "It is the mind that has been trained into Aristotelian logic.";
+const COMPARE_TEXT = "Meditation is not concentration. It is a state of pure awareness, a choiceless observation of what is.";
 
 function CompareCard({
   label,
@@ -414,7 +414,7 @@ export default function Home() {
                 <p style={{ fontSize: "0.7rem", color: "var(--accent)", fontWeight: 500 }}>The real voice</p>
               </div>
               <p style={{ fontFamily: "var(--font-playfair)", fontStyle: "italic", fontSize: "0.9rem", lineHeight: 1.6, color: "var(--foreground)" }}>
-                &ldquo;{COMPARE_TEXT}&rdquo;
+                &ldquo;It is the mind that has been trained into Aristotelian logic.&rdquo;
               </p>
               <audio controls src="/osho_real.wav" style={{ width: "100%" }} />
             </div>
