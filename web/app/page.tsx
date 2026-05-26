@@ -210,9 +210,6 @@ export default function Home() {
         <span style={{ fontFamily: "var(--font-playfair)", fontSize: "1.05rem", letterSpacing: "0.05em" }}>
           Osho Speaks
         </span>
-        <span style={{ color: "var(--muted)", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          AI Voice Clone
-        </span>
       </nav>
 
       {/* Hero */}
@@ -486,7 +483,6 @@ export default function Home() {
       <footer style={{ borderTop: "1px solid var(--border)" }} className="px-4 md:px-8 py-6">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           <span style={{ fontFamily: "var(--font-playfair)", fontSize: "0.95rem" }}>Osho Speaks</span>
-          <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>F5-TTS · Modal · Vercel</span>
         </div>
       </footer>
 
