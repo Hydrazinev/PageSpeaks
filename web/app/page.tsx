@@ -76,8 +76,8 @@ const VOICE_CONTENT: Record<
   }
 > = {
   osho: {
-    brand: "Osho Speaks",
-    accentLabel: "Fine-tuned on 19 hours of lectures",
+    brand: "PageSpeaks",
+    accentLabel: "Osho — Fine-tuned on 19 hours of lectures",
     heroHeading: "Hear any text in his voice.",
     heroSub:
       "Paste a passage, a chapter, or an entire book — and listen to it read aloud exactly as Osho would have.",
@@ -113,8 +113,8 @@ const VOICE_CONTENT: Record<
     ],
   },
   morgan: {
-    brand: "Morgan Speaks",
-    accentLabel: "Fine-tuned on 5.5 hours of narration",
+    brand: "PageSpeaks",
+    accentLabel: "Morgan Freeman — Fine-tuned on 5.5 hours of narration",
     heroHeading: "Hear any text in his voice.",
     heroSub:
       "Paste a script, a story, or a documentary treatment — and hear it narrated exactly as Morgan Freeman would.",
