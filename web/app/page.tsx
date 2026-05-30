@@ -826,8 +826,8 @@ export default function Home() {
             First request wakes the GPU (~2 min). Fast after that.
           </p>
 
-          {/* Voice switcher */}
-          <div className="flex gap-2 mb-5">
+          {/* Voice switcher - Large discovery-focused */}
+          <div className="flex gap-3 mb-6">
             {VOICES.map((v) => (
               <button
                 key={v.id}
@@ -838,19 +838,45 @@ export default function Home() {
                 disabled={isActive}
                 className="btn"
                 style={{
-                  padding: "0.4rem 1rem",
-                  borderRadius: "999px",
-                  fontSize: "0.78rem",
-                  fontFamily: "var(--font-inter)",
-                  border: "1px solid var(--border)",
+                  flex: 1,
+                  padding: "1.25rem",
+                  borderRadius: "10px",
+                  border:
+                    voice === v.id
+                      ? "3px solid var(--accent)"
+                      : "2px solid var(--border)",
                   background:
-                    voice === v.id ? "var(--foreground)" : "transparent",
-                  color: voice === v.id ? "var(--background)" : "var(--muted)",
-                  opacity: isActive ? 0.4 : 1,
-                  transition: "background 160ms ease-out, color 160ms ease-out",
+                    voice === v.id ? "var(--accent)" : "var(--card-bg)",
+                  cursor: isActive ? "not-allowed" : "pointer",
+                  opacity: isActive ? 0.6 : 1,
+                  transition: "all 200ms ease-out",
                 }}
               >
-                {v.label}
+                <div
+                  style={{
+                    fontSize: "1.3rem",
+                    fontWeight: 700,
+                    color:
+                      voice === v.id
+                        ? "var(--background)"
+                        : "var(--foreground)",
+                    fontFamily: "var(--font-playfair)",
+                  }}
+                >
+                  {v.label}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.7rem",
+                    color:
+                      voice === v.id ? "rgba(255,255,255,0.8)" : "var(--muted)",
+                    marginTop: "0.4rem",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {voice === v.id ? "Active" : "Tap to try"}
+                </div>
               </button>
             ))}
           </div>
