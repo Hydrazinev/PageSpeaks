@@ -381,6 +381,10 @@ function CompareAI({ voice }: { voice: Voice }) {
   const [loading, setLoading] = useState(false);
   const cc = COMPARE_CONTENT[voice];
 
+  useEffect(() => {
+    setAiUrl(null);
+  }, [voice]);
+
   async function generate() {
     setLoading(true);
     try {
@@ -485,7 +489,7 @@ export default function Home() {
   const [downloading, setDownloading] = useState(false);
   const abortController = useRef<AbortController | null>(null);
   const blobUrls = useRef<Set<string>>(new Set());
-  const audioCache = useRef<Map<string, string>>(new Map());
+  const audioCache = useRef<Map<string, Blob>>(new Map());
 
   useEffect(() => {
     document.body.setAttribute("data-voice", voice);
@@ -541,7 +545,10 @@ export default function Home() {
     // Check cache first
     const cacheKey = `${chunk}|${speedRef.current}|${speaker}`;
     if (audioCache.current.has(cacheKey)) {
-      return audioCache.current.get(cacheKey)!;
+      const cachedBlob = audioCache.current.get(cacheKey)!;
+      const url = URL.createObjectURL(cachedBlob);
+      blobUrls.current.add(url);
+      return url;
     }
 
     try {
@@ -558,10 +565,10 @@ export default function Home() {
       }
       const blob = await res.blob();
       downloadBlobs.current.push(blob);
+      // Cache the blob so it stays in memory
+      audioCache.current.set(cacheKey, blob);
       const url = URL.createObjectURL(blob);
       blobUrls.current.add(url);
-      // Cache the URL for this chunk/speed/speaker combo
-      audioCache.current.set(cacheKey, url);
       return url;
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
