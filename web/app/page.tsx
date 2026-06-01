@@ -465,7 +465,7 @@ export default function Home() {
 
   const VOICE_SPEED_DEFAULTS: Record<Voice, number> = {
     osho: 1.0,
-    morgan: 0.65,
+    morgan: 1.0,
   };
 
   const [text, setText] = useState("");
