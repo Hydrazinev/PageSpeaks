@@ -475,6 +475,8 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [totalChunks, setTotalChunks] = useState(0);
   const [speed, setSpeed] = useState(1.0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const speedRef = useRef(1.0);
   const stopFlag = useRef(false);
   const pauseFlag = useRef(false);
@@ -565,13 +567,27 @@ export default function Home() {
       const audio = new Audio(url);
       audio.playbackRate = speedRef.current;
       currentAudio.current = audio;
+      audio.onloadedmetadata = () => {
+        setDuration(audio.duration);
+      };
+      audio.ontimeupdate = () => {
+        setCurrentTime(audio.currentTime);
+      };
       audio.onended = () => {
         URL.revokeObjectURL(url);
+        setCurrentTime(0);
         resolve();
       };
       audio.onerror = reject;
       audio.play();
     });
+  }
+
+  function handleSeek(newTime: number) {
+    if (currentAudio.current) {
+      currentAudio.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
   }
 
   async function handleDownload() {
@@ -939,7 +955,7 @@ export default function Home() {
                     textTransform: "uppercase",
                   }}
                 >
-                  {isActive
+                  {isActive && voice === v.id
                     ? "Playing…"
                     : voice === v.id
                       ? "Active"
@@ -1052,6 +1068,30 @@ export default function Home() {
                     : "Playing…"}{" "}
                 &nbsp;{progress} / {totalChunks}
               </p>
+              {status === "playing" && duration > 0 && (
+                <div style={{ marginTop: "1rem" }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration}
+                    step={0.1}
+                    value={currentTime}
+                    onChange={(e) => handleSeek(parseFloat(e.target.value))}
+                    style={{ width: "100%", accentColor: "var(--accent)" }}
+                    aria-label="Audio seek"
+                  />
+                  <p
+                    style={{
+                      color: "var(--muted)",
+                      fontSize: "0.65rem",
+                      marginTop: "0.25rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    {Math.floor(currentTime)}s / {Math.floor(duration)}s
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
