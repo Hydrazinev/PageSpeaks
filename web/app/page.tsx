@@ -465,7 +465,7 @@ export default function Home() {
 
   const VOICE_SPEED_DEFAULTS: Record<Voice, number> = {
     osho: 1.0,
-    morgan: 1.0,
+    morgan: 0.9,
   };
 
   const [text, setText] = useState("");
@@ -485,6 +485,7 @@ export default function Home() {
   const [downloading, setDownloading] = useState(false);
   const abortController = useRef<AbortController | null>(null);
   const blobUrls = useRef<Set<string>>(new Set());
+  const audioCache = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     document.body.setAttribute("data-voice", voice);
@@ -537,6 +538,12 @@ export default function Home() {
     chunk: string,
     speaker: Voice,
   ): Promise<string> {
+    // Check cache first
+    const cacheKey = `${chunk}|${speedRef.current}|${speaker}`;
+    if (audioCache.current.has(cacheKey)) {
+      return audioCache.current.get(cacheKey)!;
+    }
+
     try {
       const res = await fetch(`${TTS_URL}/synthesize`, {
         method: "POST",
@@ -553,6 +560,8 @@ export default function Home() {
       downloadBlobs.current.push(blob);
       const url = URL.createObjectURL(blob);
       blobUrls.current.add(url);
+      // Cache the URL for this chunk/speed/speaker combo
+      audioCache.current.set(cacheKey, url);
       return url;
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -625,9 +634,8 @@ export default function Home() {
 
   async function handlePlay() {
     if (!text.trim()) return;
+    // Only clear download blobs for new playback, keep synthesis cache
     downloadBlobs.current = [];
-    blobUrls.current.forEach((url) => URL.revokeObjectURL(url));
-    blobUrls.current.clear();
     stopFlag.current = false;
     pauseFlag.current = false;
     abortController.current = new AbortController();
