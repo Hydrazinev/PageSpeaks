@@ -18,6 +18,16 @@ export const metadata: Metadata = {
   title: "PageSpeaks — Hear Any Text in Multiple Voices",
   description:
     "PageSpeaks brings text to life with AI voice clones of multiple speakers. Fine-tuned on thousands of hours of real audio.",
+  metadataBase: new URL("https://pagespeaks.vercel.app"),
+  canonical: "https://pagespeaks.vercel.app",
+  openGraph: {
+    title: "PageSpeaks — Hear Any Text in Multiple Voices",
+    description:
+      "Paste text and hear it read aloud in the voices of famous speakers like Osho and Morgan Freeman.",
+    url: "https://pagespeaks.vercel.app",
+    image: "/osho.png",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

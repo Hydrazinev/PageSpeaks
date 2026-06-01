@@ -4,6 +4,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const CHUNK_SIZE = 800;
 const TTS_URL = process.env.NEXT_PUBLIC_TTS_URL ?? "http://localhost:8000";
+const VOICE_SPEED_DEFAULTS: Record<Voice, number> = {
+  osho: 1.0,
+  morgan: 0.65,
+};
 
 const QUOTES = [
   "The real question is not whether life exists after death. The real question is whether you are alive before death.",
@@ -26,7 +30,7 @@ const MORGAN_QUOTES = [
   "If you live a life of make-believe, your life isn't worth anything until you do something that does challenge your reality.",
   "Learning how to be still, to really be still and let life happen — that stillness becomes a radiance.",
   "The best way to guarantee a loss is to quit.",
-  "Was I always going to be here? No. I was not. I chose to be here.",
+  "I've had to work hard and show people who I am day in and day out.",
 ];
 
 type Voice = "osho" | "morgan";
@@ -224,6 +228,7 @@ function VideoBackground({ src, fallback }: { src: string; fallback: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fadingOutRef = useRef(false);
   const rafRef = useRef<number | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const cancelFade = useCallback(() => {
     if (rafRef.current !== null) {
@@ -272,7 +277,27 @@ function VideoBackground({ src, fallback }: { src: string; fallback: string }) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !src) return;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting && video.paused && video.src) {
+          video.play().catch(() => {});
+        } else if (!entry.isIntersecting && !video.paused) {
+          video.pause();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src || !isVisible) return;
 
     video.style.opacity = "0";
     fadingOutRef.current = false;
@@ -314,8 +339,9 @@ function VideoBackground({ src, fallback }: { src: string; fallback: string }) {
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("ended", handleEnded);
+      video.pause();
     };
-  }, [src, fadeIn, fadeOut, cancelFade]);
+  }, [src, fadeIn, fadeOut, cancelFade, isVisible]);
 
   useEffect(() => () => cancelFade(), [cancelFade]);
 
@@ -439,7 +465,7 @@ export default function Home() {
 
   const VOICE_SPEED_DEFAULTS: Record<Voice, number> = {
     osho: 1.0,
-    morgan: 1.0,
+    morgan: 0.65,
   };
 
   const [text, setText] = useState("");
@@ -455,11 +481,14 @@ export default function Home() {
   const currentAudio = useRef<HTMLAudioElement | null>(null);
   const downloadBlobs = useRef<Blob[]>([]);
   const [downloading, setDownloading] = useState(false);
+  const abortController = useRef<AbortController | null>(null);
+  const blobUrls = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     document.body.setAttribute("data-voice", voice);
     const quotes = VOICE_CONTENT[voice].quotes;
     setQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+    handleSpeedChange(VOICE_SPEED_DEFAULTS[voice]);
   }, [voice]);
 
   function handleSpeedChange(val: number) {
@@ -506,15 +535,29 @@ export default function Home() {
     chunk: string,
     speaker: Voice,
   ): Promise<string> {
-    const res = await fetch(`${TTS_URL}/synthesize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: chunk, speed: speedRef.current, speaker }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const blob = await res.blob();
-    downloadBlobs.current.push(blob);
-    return URL.createObjectURL(blob);
+    try {
+      const res = await fetch(`${TTS_URL}/synthesize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: chunk, speed: speedRef.current, speaker }),
+        signal: abortController.current?.signal,
+      });
+      if (!res.ok) {
+        throw new Error(
+          "Synthesis failed. Check your connection and try again.",
+        );
+      }
+      const blob = await res.blob();
+      downloadBlobs.current.push(blob);
+      const url = URL.createObjectURL(blob);
+      blobUrls.current.add(url);
+      return url;
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return "";
+      }
+      throw err;
+    }
   }
 
   async function playUrl(url: string): Promise<void> {
@@ -567,8 +610,11 @@ export default function Home() {
   async function handlePlay() {
     if (!text.trim()) return;
     downloadBlobs.current = [];
+    blobUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    blobUrls.current.clear();
     stopFlag.current = false;
     pauseFlag.current = false;
+    abortController.current = new AbortController();
     const chunks = chunkText(text);
     setTotalChunks(chunks.length);
     setProgress(0);
@@ -577,29 +623,39 @@ export default function Home() {
     try {
       let upNext: Promise<string> = synthesizeChunk(chunks[0], currentVoice);
       for (let i = 0; i < chunks.length; i++) {
-        if (stopFlag.current) break;
+        if (stopFlag.current || voice !== currentVoice) break;
         setProgress(i + 1);
         setStatus("loading");
         const url = await upNext;
-        if (i + 1 < chunks.length) {
+        if (!url) break;
+        if (i + 1 < chunks.length && voice === currentVoice) {
           upNext = synthesizeChunk(chunks[i + 1], currentVoice);
         }
-        if (stopFlag.current) {
+        if (stopFlag.current || voice !== currentVoice) {
           URL.revokeObjectURL(url);
+          blobUrls.current.delete(url);
           break;
         }
-        while (pauseFlag.current && !stopFlag.current) {
+        while (
+          pauseFlag.current &&
+          !stopFlag.current &&
+          voice === currentVoice
+        ) {
           await new Promise((r) => setTimeout(r, 200));
         }
-        if (stopFlag.current) {
+        if (stopFlag.current || voice !== currentVoice) {
           URL.revokeObjectURL(url);
+          blobUrls.current.delete(url);
           break;
         }
         setStatus("playing");
         await playUrl(url);
+        blobUrls.current.delete(url);
       }
-      setStatus(stopFlag.current ? "idle" : "done");
-    } catch {
+      setStatus(
+        stopFlag.current ? "idle" : voice === currentVoice ? "done" : "idle",
+      );
+    } catch (err) {
       setStatus("error");
     }
   }
@@ -607,6 +663,7 @@ export default function Home() {
   function handleStop() {
     stopFlag.current = true;
     pauseFlag.current = false;
+    abortController.current?.abort();
     currentAudio.current?.pause();
     currentAudio.current = null;
     setStatus("idle");
@@ -827,7 +884,7 @@ export default function Home() {
           </p>
 
           {/* Voice switcher - Large discovery-focused */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-3 mb-6 flex-col sm:flex-row">
             {VOICES.map((v) => (
               <button
                 key={v.id}
@@ -836,20 +893,25 @@ export default function Home() {
                   handleSpeedChange(VOICE_SPEED_DEFAULTS[v.id]);
                 }}
                 disabled={isActive}
+                aria-pressed={voice === v.id}
+                aria-label={`Select ${v.label} voice${voice === v.id ? " (currently selected)" : ""}`}
                 className="btn"
                 style={{
                   flex: 1,
                   padding: "1.25rem",
                   borderRadius: "10px",
                   border:
-                    voice === v.id
+                    voice === v.id && !isActive
                       ? "3px solid var(--accent)"
                       : "2px solid var(--border)",
                   background:
-                    voice === v.id ? "var(--accent)" : "var(--card-bg)",
+                    voice === v.id && !isActive
+                      ? "var(--accent)"
+                      : "var(--card-bg)",
                   cursor: isActive ? "not-allowed" : "pointer",
-                  opacity: isActive ? 0.6 : 1,
+                  opacity: isActive ? 0.5 : 1,
                   transition: "all 200ms ease-out",
+                  filter: isActive ? "grayscale(80%)" : "none",
                 }}
               >
                 <div
@@ -857,7 +919,7 @@ export default function Home() {
                     fontSize: "1.3rem",
                     fontWeight: 700,
                     color:
-                      voice === v.id
+                      voice === v.id && !isActive
                         ? "var(--background)"
                         : "var(--foreground)",
                     fontFamily: "var(--font-playfair)",
@@ -869,13 +931,19 @@ export default function Home() {
                   style={{
                     fontSize: "0.7rem",
                     color:
-                      voice === v.id ? "rgba(255,255,255,0.8)" : "var(--muted)",
+                      voice === v.id && !isActive
+                        ? "rgba(255,255,255,0.8)"
+                        : "var(--muted)",
                     marginTop: "0.4rem",
                     letterSpacing: "0.05em",
                     textTransform: "uppercase",
                   }}
                 >
-                  {voice === v.id ? "Active" : "Tap to try"}
+                  {isActive
+                    ? "Playing…"
+                    : voice === v.id
+                      ? "Active"
+                      : "Tap to try"}
                 </div>
               </button>
             ))}
@@ -897,10 +965,13 @@ export default function Home() {
               outline: "none",
               fontFamily: "var(--font-inter)",
             }}
-            rows={7}
+            rows={
+              typeof window !== "undefined" && window.innerWidth < 640 ? 5 : 7
+            }
+            maxLength={5000}
             placeholder={vc.textareaPlaceholder}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => setText(e.target.value.slice(0, 5000))}
             disabled={isActive}
           />
 
@@ -932,6 +1003,8 @@ export default function Home() {
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
               className="flex-1"
               style={{ accentColor: "var(--accent)" }}
+              aria-label="Playback speed"
+              aria-valuetext={`${speed.toFixed(2)}x`}
             />
             <span
               style={{
@@ -1055,6 +1128,8 @@ export default function Home() {
                 gap: "1rem",
                 marginTop: "1rem",
               }}
+              role="alert"
+              aria-live="polite"
             >
               <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
                 Finished reading.
@@ -1088,120 +1163,123 @@ export default function Home() {
                 fontSize: "0.85rem",
                 marginTop: "1rem",
               }}
+              role="alert"
+              aria-live="assertive"
             >
-              Could not reach the TTS service. The GPU may be waking up — try
-              again in a moment.
+              Synthesis failed. Check your connection and try again.
             </p>
           )}
         </div>
       </section>
 
       {/* ── Compare ─────────────────────────────────────────────────────── */}
-      <section
-        style={{ borderTop: "1px solid var(--border)" }}
-        className="px-4 md:px-8 py-12 md:py-20"
-      >
-        <div className="max-w-5xl mx-auto">
-          <p
-            style={{
-              color: "var(--accent)",
-              fontSize: "0.6rem",
-              letterSpacing: "0.25em",
-              textTransform: "uppercase",
-              marginBottom: "0.75rem",
-              fontWeight: 600,
-            }}
-          >
-            Compare
-          </p>
-          <h2
-            style={{
-              fontFamily: "var(--font-playfair)",
-              fontSize: "clamp(1.6rem, 4vw, 2rem)",
-              fontWeight: 400,
-              marginBottom: "0.5rem",
-            }}
-          >
-            Real vs AI
-          </h2>
-          <p
-            style={{
-              color: "var(--muted)",
-              fontSize: "0.85rem",
-              fontWeight: 300,
-              marginBottom: "2rem",
-            }}
-          >
-            Same sentence — once from the original recording, once from the AI
-            clone.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
-              className="card-lift"
+      {voice === "osho" && (
+        <section
+          style={{ borderTop: "1px solid var(--border)" }}
+          className="px-4 md:px-8 py-12 md:py-20"
+        >
+          <div className="max-w-5xl mx-auto">
+            <p
               style={{
-                background: "var(--card-bg)",
-                borderRadius: "6px",
-                padding: "1.25rem",
+                color: "var(--accent)",
+                fontSize: "0.6rem",
+                letterSpacing: "0.25em",
+                textTransform: "uppercase",
+                marginBottom: "0.75rem",
+                fontWeight: 600,
               }}
             >
-              <p
+              Compare
+            </p>
+            <h2
+              style={{
+                fontFamily: "var(--font-playfair)",
+                fontSize: "clamp(1.6rem, 4vw, 2rem)",
+                fontWeight: 400,
+                marginBottom: "0.5rem",
+              }}
+            >
+              Real vs AI
+            </h2>
+            <p
+              style={{
+                color: "var(--muted)",
+                fontSize: "0.85rem",
+                fontWeight: 300,
+                marginBottom: "2rem",
+              }}
+            >
+              Same sentence — once from the original recording, once from the AI
+              clone.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div
+                className="card-lift"
                 style={{
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--muted)",
-                  marginBottom: "0.75rem",
+                  background: "var(--card-bg)",
+                  borderRadius: "6px",
+                  padding: "1.25rem",
                 }}
               >
-                Original Voice
-              </p>
-              {voice === "osho" ? (
-                <>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-playfair)",
-                      fontStyle: "italic",
-                      fontSize: "0.9rem",
-                      lineHeight: 1.6,
-                      marginBottom: "1.25rem",
-                    }}
-                  >
-                    &ldquo;It is the mind that has been trained into
-                    Aristotelian logic.&rdquo;
-                  </p>
-                  <audio
-                    controls
-                    src="/osho_real.wav"
-                    style={{ width: "100%" }}
-                  />
-                </>
-              ) : (
-                <>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-playfair)",
-                      fontStyle: "italic",
-                      fontSize: "0.9rem",
-                      lineHeight: 1.6,
-                      marginBottom: "1.25rem",
-                    }}
-                  >
-                    &ldquo;How did the universe begin? We&apos;ve all heard of
-                    the Big Bang, but how do we really know that&apos;s the way
-                    it was?&rdquo;
-                  </p>
-                  <audio
-                    controls
-                    src="/morgan_real.wav"
-                    style={{ width: "100%" }}
-                  />
-                </>
-              )}
+                <p
+                  style={{
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--muted)",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  Original Voice
+                </p>
+                {voice === "osho" ? (
+                  <>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-playfair)",
+                        fontStyle: "italic",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.6,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
+                      &ldquo;It is the mind that has been trained into
+                      Aristotelian logic.&rdquo;
+                    </p>
+                    <audio
+                      controls
+                      src="/osho_real.wav"
+                      style={{ width: "100%" }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-playfair)",
+                        fontStyle: "italic",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.6,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
+                      &ldquo;How did the universe begin? We&apos;ve all heard of
+                      the Big Bang, but how do we really know that&apos;s the
+                      way it was?&rdquo;
+                    </p>
+                    <audio
+                      controls
+                      src="/morgan_real.wav"
+                      style={{ width: "100%" }}
+                    />
+                  </>
+                )}
+              </div>
+              <CompareAI voice={voice} />
             </div>
-            <CompareAI voice={voice} />
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── Process ─────────────────────────────────────────────────────── */}
       <section
@@ -1310,13 +1388,14 @@ export default function Home() {
       >
         {/* Giant decorative quote mark */}
         <div
-          aria-hidden
+          aria-hidden="true"
+          role="presentation"
           style={{
             position: "absolute",
             top: "-0.5rem",
             left: "1.5rem",
             fontFamily: "var(--font-playfair)",
-            fontSize: "22rem",
+            fontSize: "clamp(12rem, 25vw, 22rem)",
             lineHeight: 1,
             color: "var(--accent)",
             opacity: 0.06,
