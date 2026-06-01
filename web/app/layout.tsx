@@ -19,7 +19,9 @@ export const metadata: Metadata = {
   description:
     "PageSpeaks brings text to life with AI voice clones of multiple speakers. Fine-tuned on thousands of hours of real audio.",
   metadataBase: new URL("https://pagespeaks.vercel.app"),
-  canonical: "https://pagespeaks.vercel.app",
+  alternates: {
+    canonical: "https://pagespeaks.vercel.app",
+  },
   openGraph: {
     title: "PageSpeaks — Hear Any Text in Multiple Voices",
     description:
