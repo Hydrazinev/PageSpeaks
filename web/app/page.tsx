@@ -1173,113 +1173,111 @@ export default function Home() {
       </section>
 
       {/* ── Compare ─────────────────────────────────────────────────────── */}
-      {voice === "osho" && (
-        <section
-          style={{ borderTop: "1px solid var(--border)" }}
-          className="px-4 md:px-8 py-12 md:py-20"
-        >
-          <div className="max-w-5xl mx-auto">
-            <p
+      <section
+        style={{ borderTop: "1px solid var(--border)" }}
+        className="px-4 md:px-8 py-12 md:py-20"
+      >
+        <div className="max-w-5xl mx-auto">
+          <p
+            style={{
+              color: "var(--accent)",
+              fontSize: "0.6rem",
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              marginBottom: "0.75rem",
+              fontWeight: 600,
+            }}
+          >
+            Compare
+          </p>
+          <h2
+            style={{
+              fontFamily: "var(--font-playfair)",
+              fontSize: "clamp(1.6rem, 4vw, 2rem)",
+              fontWeight: 400,
+              marginBottom: "0.5rem",
+            }}
+          >
+            Real vs AI
+          </h2>
+          <p
+            style={{
+              color: "var(--muted)",
+              fontSize: "0.85rem",
+              fontWeight: 300,
+              marginBottom: "2rem",
+            }}
+          >
+            Same sentence — once from the original recording, once from the AI
+            clone.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className="card-lift"
               style={{
-                color: "var(--accent)",
-                fontSize: "0.6rem",
-                letterSpacing: "0.25em",
-                textTransform: "uppercase",
-                marginBottom: "0.75rem",
-                fontWeight: 600,
+                background: "var(--card-bg)",
+                borderRadius: "6px",
+                padding: "1.25rem",
               }}
             >
-              Compare
-            </p>
-            <h2
-              style={{
-                fontFamily: "var(--font-playfair)",
-                fontSize: "clamp(1.6rem, 4vw, 2rem)",
-                fontWeight: 400,
-                marginBottom: "0.5rem",
-              }}
-            >
-              Real vs AI
-            </h2>
-            <p
-              style={{
-                color: "var(--muted)",
-                fontSize: "0.85rem",
-                fontWeight: 300,
-                marginBottom: "2rem",
-              }}
-            >
-              Same sentence — once from the original recording, once from the AI
-              clone.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div
-                className="card-lift"
+              <p
                 style={{
-                  background: "var(--card-bg)",
-                  borderRadius: "6px",
-                  padding: "1.25rem",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "var(--muted)",
+                  marginBottom: "0.75rem",
                 }}
               >
-                <p
-                  style={{
-                    fontSize: "0.7rem",
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    color: "var(--muted)",
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  Original Voice
-                </p>
-                {voice === "osho" ? (
-                  <>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-playfair)",
-                        fontStyle: "italic",
-                        fontSize: "0.9rem",
-                        lineHeight: 1.6,
-                        marginBottom: "1.25rem",
-                      }}
-                    >
-                      &ldquo;It is the mind that has been trained into
-                      Aristotelian logic.&rdquo;
-                    </p>
-                    <audio
-                      controls
-                      src="/osho_real.wav"
-                      style={{ width: "100%" }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-playfair)",
-                        fontStyle: "italic",
-                        fontSize: "0.9rem",
-                        lineHeight: 1.6,
-                        marginBottom: "1.25rem",
-                      }}
-                    >
-                      &ldquo;How did the universe begin? We&apos;ve all heard of
-                      the Big Bang, but how do we really know that&apos;s the
-                      way it was?&rdquo;
-                    </p>
-                    <audio
-                      controls
-                      src="/morgan_real.wav"
-                      style={{ width: "100%" }}
-                    />
-                  </>
-                )}
-              </div>
-              <CompareAI voice={voice} />
+                Original Voice
+              </p>
+              {voice === "osho" ? (
+                <>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-playfair)",
+                      fontStyle: "italic",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.6,
+                      marginBottom: "1.25rem",
+                    }}
+                  >
+                    &ldquo;It is the mind that has been trained into
+                    Aristotelian logic.&rdquo;
+                  </p>
+                  <audio
+                    controls
+                    src="/osho_real.wav"
+                    style={{ width: "100%" }}
+                  />
+                </>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontFamily: "var(--font-playfair)",
+                      fontStyle: "italic",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.6,
+                      marginBottom: "1.25rem",
+                    }}
+                  >
+                    &ldquo;How did the universe begin? We&apos;ve all heard of
+                    the Big Bang, but how do we really know that&apos;s the way
+                    it was?&rdquo;
+                  </p>
+                  <audio
+                    controls
+                    src="/morgan_real.wav"
+                    style={{ width: "100%" }}
+                  />
+                </>
+              )}
             </div>
+            <CompareAI voice={voice} />
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ── Process ─────────────────────────────────────────────────────── */}
       <section
