@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     description:
       "Paste text and hear it read aloud in the voices of famous speakers like Osho and Morgan Freeman.",
     url: "https://pagespeaks.vercel.app",
-    image: "/osho.png",
+    images: [{ url: "/osho.png", width: 1200, height: 630 }],
     type: "website",
   },
 };
